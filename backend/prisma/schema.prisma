@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Style {
+  id               String  @id @default(cuid())
+  name             String
+  code             String  @unique
+  targetWidth      Float?  // optional baseline
+  targetShrinkage  Float?  // optional baseline
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  rolls            Roll[]
+  rules            Rule[]
+  allocations      AllocationLog[]
+}
+
+model Roll {
+  id             String   @id @default(cuid())
+  styleId        String
+  style          Style    @relation(fields: [styleId], references: [id])
+  rollId         String
+  fabricWidth    Float
+  widthShrinkage Float
+  lengthM        Float
+  location       String
+  isActive       Boolean  @default(true)
+  isBalance      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  categorized    CategorizedRoll[]
+
+  @@unique([styleId, rollId])
+}
+
+model Rule {
+  id                     String   @id @default(cuid())
+  styleId                String
+  style                  Style    @relation(fields: [styleId], references: [id])
+  widthToleranceMin      Float
+  widthToleranceMax      Float
+  shrinkageToleranceMin  Float
+  shrinkageToleranceMax  Float
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  categorized            CategorizedRoll[]
+}
+
+model CategorizedRoll {
+  id     String @id @default(cuid())
+  ruleId String
+  rollId String
+  rule   Rule  @relation(fields: [ruleId], references: [id])
+  roll   Roll  @relation(fields: [rollId], references: [id])
+
+  @@unique([ruleId, rollId])
+}
+
+model AllocationLog {
+  id             String   @id @default(cuid())
+  styleId        String
+  rollId         String
+  style          Style    @relation(fields: [styleId], references: [id])
+  roll           Roll     @relation(fields: [rollId], references: [id])
+  consumedLength Float
+  balanceAfter   Float
+  createdAt      DateTime @default(now())
+}
+
+
